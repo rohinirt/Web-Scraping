@@ -118,16 +118,19 @@ for zone, (x1, y1, x2, y2) in zones_layout.items():
     runs = int(summary.loc[zone, "Runs"])
     wkts = int(summary.loc[zone, "Wickets"])
 
+    strike_rate_zone = (runs / filtered[filtered["Zone"] == zone].shape[0]) * 100 if filtered[filtered["Zone"] == zone].shape[0] > 0 else 0
+
     ax.text(
         x1 + w / 2,
         y1 + h / 2,
-        f"{zone}\nRuns: {runs}\nWkts: {wkts}\nAvg: {avg:.1f}",
+        f"{zone}\nRuns: {runs}\nWkts: {wkts}\nAvg: {avg:.1f}\nSR: {strike_rate_zone:.1f}",
         ha="center",
         va="center",
         weight="bold",
         fontsize=10,
         color="black" if norm(avg) < 0.6 else "white"
     )
+
 
 ax.set_xlim(-0.75, 0.75)
 ax.set_ylim(0, 2)
