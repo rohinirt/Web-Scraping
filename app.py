@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
 
 # Load your data
 df = pd.read_csv("test data.csv")
@@ -58,25 +60,21 @@ summary = (
 summary["Avg Runs/Wicket"] = summary["Runs"] / summary["Wickets"]
 summary["Avg Runs/Wicket"] = summary["Avg Runs/Wicket"].replace([float("inf"), float("nan")], 0)
 
+# Normalize for color mapping
 avg_values = summary["Avg Runs/Wicket"]
 norm = mcolors.Normalize(vmin=avg_values.min(), vmax=avg_values.max())
-cmap = cm.get_cmap('YlOrRd')  # You can try other maps like 'coolwarm', 'viridis'
+cmap = cm.get_cmap('YlOrRd')
 
+# Plotting
 fig, ax = plt.subplots(figsize=(7, 10))
 
 for zone, (x1, y1, x2, y2) in zones_layout.items():
     w, h = x2 - x1, y2 - y1
-
     avg = summary.loc[zone, "Avg Runs/Wicket"]
     color = cmap(norm(avg))
 
     ax.add_patch(
-        patches.Rectangle(
-            (x1, y1), w, h,
-            edgecolor="black",
-            facecolor=color,
-            linewidth=2
-        )
+        patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=2)
     )
 
     runs = int(summary.loc[zone, "Runs"])
@@ -90,7 +88,7 @@ for zone, (x1, y1, x2, y2) in zones_layout.items():
         va="center",
         weight="bold",
         fontsize=9,
-        color="black" if norm(avg) < 0.6 else "white"  # contrast text
+        color="black" if norm(avg) < 0.6 else "white"
     )
 
 ax.set_xlim(-0.75, 0.25)
@@ -100,10 +98,11 @@ ax.set_ylabel("CreaseZ (Length in meters)")
 ax.set_title("Zone-wise Heatmap: Avg Runs/Wicket")
 ax.grid(True)
 
-# Optional: add colorbar legend
+# Add colorbar
 sm = cm.ScalarMappable(cmap=cmap, norm=norm)
 sm.set_array([])
 cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
 cbar.set_label("Avg Runs/Wicket")
 
 st.pyplot(fig)
+
