@@ -5,42 +5,56 @@ import matplotlib.patches as patches
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
-# --------------------------
-# Load Data
-# --------------------------
+# ---------------------------------
+# 1. LOAD DATA
+# ---------------------------------
 df = pd.read_csv("test data.csv")
 
 st.sidebar.header("Filters")
 
-# --------------------------
-# Reset Filters Button
-# --------------------------
+# ---------------------------------
+# 2. RESET BUTTON
+# ---------------------------------
 if st.sidebar.button("Reset Filters"):
     st.experimental_rerun()
 
-# --------------------------
-# Cascading Filter Logic
-# --------------------------
-batsman_options = ["All"] + sorted(df["BatsmanName"].unique())
-batsman = st.sidebar.selectbox("Select Batsman", batsman_options)
+# ---------------------------------
+# 3. FILTER HIERARCHY
+#    BattingTeam ➜ Batsman ➜ DeliveryType
+# ---------------------------------
+# ── Batting Team first ─────────────────────────
+bat_team_opts = ["All"] + sorted(df["BattingTeam"].dropna().unique())
+bat_team = st.sidebar.selectbox("Select Batting Team", bat_team_opts)
 
-df_bat = df if batsman == "All" else df[df["BatsmanName"] == batsman]
+df_bat_team = df if bat_team == "All" else df[df["BattingTeam"] == bat_team]
 
-delivery_options = ["All"] + sorted(df_bat["DeliveryType"].dropna().unique())
-delivery = st.sidebar.selectbox("Select Delivery Type", delivery_options)
+# ── Batsman filtered by Batting Team ───────────
+batsman_opts = ["All"] + sorted(df_bat_team["BatsmanName"].dropna().unique())
+batsman = st.sidebar.selectbox("Select Batsman", batsman_opts)
 
-df_delivery = df_bat if delivery == "All" else df_bat[df_bat["DeliveryType"] == delivery]
+df_batsman = df_bat_team if batsman == "All" else df_bat_team[df_bat_team["BatsmanName"] == batsman]
 
-bat_team_options = ["All"] + sorted(df_delivery["BattingTeam"].dropna().unique())
-bat_team = st.sidebar.selectbox("Select Batting Team", bat_team_options)
+# ── Delivery Type filtered by Batsman & Team ───
+delivery_opts = ["All"] + sorted(df_batsman["DeliveryType"].dropna().unique())
+delivery = st.sidebar.selectbox("Select Delivery Type", delivery_opts)
 
-df_bat_team = df_delivery if bat_team == "All" else df_delivery[df_delivery["BattingTeam"] == bat_team]
+filtered = df_batsman if delivery == "All" else df_batsman[df_batsman["DeliveryType"] == delivery]
 
-bowl_team_options = ["All"] + sorted(df_bat_team["BowlingTeam"].dropna().unique())
-bowl_team = st.sidebar.selectbox("Select Bowling Team", bowl_team_options)
+# ---------------------------------
+# 4. STRIKE RATE (for current filter set)
+# ---------------------------------
+if len(filtered) == 0:
+    strike_rate = 0
+else:
+    strike_rate = 100 * filtered["Runs"].sum() / len(filtered)
 
-# Final filtered data
-filtered = df_bat_team if bowl_team == "All" else df_bat_team[df_bat_team["BowlingTeam"] == bowl_team]
+st.sidebar.markdown(f"**Strike Rate:** `{strike_rate:.1f}`")
+
+# ------------- everything below (zones, handedness, summary, plotting) -------------
+# ... keep your existing zone‑mapping, handedness check, summary calculation,
+#     colour‑mapped heat‑plot, etc.
+
+
 
 # --------------------------
 # Define Zones based on Batting Hand
@@ -125,7 +139,7 @@ for zone, (x1, y1, x2, y2) in zones_layout.items():
         ha="center",
         va="center",
         weight="bold",
-        fontsize=10,
+        fontsize=12,
         color="black" if norm(avg) < 0.6 else "white"
     )
 
