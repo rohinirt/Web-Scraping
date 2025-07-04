@@ -63,7 +63,7 @@ summary["Avg Runs/Wicket"] = summary["Avg Runs/Wicket"].replace([float("inf"), f
 # Normalize for color mapping
 avg_values = summary["Avg Runs/Wicket"]
 norm = mcolors.Normalize(vmin=avg_values.min(), vmax=avg_values.max())
-cmap = cm.get_cmap('YlGnBu')
+cmap = cm.get_cmap('YlRdGn')
 
 # Plotting
 fig, ax = plt.subplots(figsize=(3, 5))
@@ -87,7 +87,7 @@ for zone, (x1, y1, x2, y2) in zones_layout.items():
         ha="center",
         va="center",
         weight="bold",
-        fontsize=9,
+        fontsize=8,
         color="black" if norm(avg) < 0.6 else "white"
     )
 
