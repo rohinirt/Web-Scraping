@@ -119,7 +119,12 @@ ax.set_xlim(-0.75, 0.75)
 ax.set_ylim(0, 2)
 ax.set_xlabel("CreaseY (m)")
 ax.set_ylabel("CreaseZ (m)")
-ax.set_title("Zone‑wise Heatmap: Avg Runs/Wicket")
+if batsman == "All":
+    title = "Zone-wise Heatmap (All Batsmen)"
+else:
+    title = f"{batsman} - Zone-wise Heatmap (Avg Runs/Wicket)"
+
+ax.set_title(title)
 ax.grid(True)
 
 sm = cm.ScalarMappable(cmap=cmap, norm=norm)
