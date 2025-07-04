@@ -90,7 +90,7 @@ norm = mcolors.Normalize(vmin=summary["Avg Runs/Wicket"].min(),
                          vmax=summary["Avg Runs/Wicket"].max())
 cmap = cm.get_cmap("RdYlGn")
 
-fig, ax = plt.subplots(figsize=(4, 5))
+fig, ax = plt.subplots(figsize=(4, 10))
 
 for zone, (x1, y1, x2, y2) in zones_layout.items():
     w, h = x2 - x1, y2 - y1
