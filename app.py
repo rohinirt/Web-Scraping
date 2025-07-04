@@ -63,7 +63,7 @@ summary["Avg Runs/Wicket"] = summary["Avg Runs/Wicket"].replace([float("inf"), f
 # Normalize for color mapping
 avg_values = summary["Avg Runs/Wicket"]
 norm = mcolors.Normalize(vmin=avg_values.min(), vmax=avg_values.max())
-cmap = cm.get_cmap('YlOrRd')
+cmap = cm.get_cmap('YlGnBu')
 
 # Plotting
 fig, ax = plt.subplots(figsize=(7, 10))
