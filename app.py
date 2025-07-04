@@ -111,7 +111,7 @@ for zone, (x1, y1, x2, y2) in zones_layout.items():
         x1 + w / 2, y1 + h / 2,
         f"{zone}\nRuns: {runs}\nWkts: {wkts}\nAvg: {avg:.1f}",
         ha="center", va="center",
-        fontsize=8, weight="bold",
+        fontsize=10, weight="bold",
         color="black" if norm(avg) < 0.6 else "white"
     )
 
