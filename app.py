@@ -88,7 +88,7 @@ summary["Avg Runs/Wicket"].replace([float("inf"), float("nan")], 0, inplace=True
 # --------------------------------------------------
 norm = mcolors.Normalize(vmin=summary["Avg Runs/Wicket"].min(),
                          vmax=summary["Avg Runs/Wicket"].max())
-cmap = cm.get_cmap("RdYlGn")
+cmap = cm.get_cmap("Blues")
 
 fig, ax = plt.subplots(figsize=(10, 10))
 
