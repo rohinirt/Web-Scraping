@@ -55,7 +55,7 @@ zone_runs = (
 
 # Plot heatmap
 colors = ['#FFCCCC', '#CCFFCC', '#CCCCFF', '#FFFFCC', '#FFCCFF', '#CCE5FF']
-fig, ax = plt.subplots(figsize=(7, 10))
+fig, ax = plt.subplots(figsize=(3, 5))
 
 for (zone, (x1, y1, x2, y2)), color in zip(zones_layout.items(), colors):
     w, h = x2 - x1, y2 - y1
