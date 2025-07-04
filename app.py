@@ -66,7 +66,7 @@ norm = mcolors.Normalize(vmin=avg_values.min(), vmax=avg_values.max())
 cmap = cm.get_cmap('RdYlGn')
 
 # Plotting
-fig, ax = plt.subplots(figsize=(3, 5))
+fig, ax = plt.subplots(figsize=(4, 5))
 
 for zone, (x1, y1, x2, y2) in zones_layout.items():
     w, h = x2 - x1, y2 - y1
