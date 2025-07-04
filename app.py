@@ -5,59 +5,75 @@ import matplotlib.patches as patches
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
-# --------------------------------------------------
-# 1. LOAD DATA
-# --------------------------------------------------
+# --------------------------
+# Load Data
+# --------------------------
 df = pd.read_csv("test data.csv")
 
-# --------------------------------------------------
-# 2. SIDEBAR FILTERS
-# --------------------------------------------------
 st.sidebar.header("Filters")
 
-batsman   = st.sidebar.selectbox("Select Batsman",       ["All"] + sorted(df["BatsmanName"].unique()))
-delivery  = st.sidebar.selectbox("Select Delivery Type", ["All"] + sorted(df["DeliveryType"].unique()))
-bat_team  = st.sidebar.selectbox("Select Batting Team",  ["All"] + sorted(df["BattingTeam"].unique()))
-bowl_team = st.sidebar.selectbox("Select Bowling Team",  ["All"] + sorted(df["BowlingTeam"].unique()))
+# --------------------------
+# Reset Filters Button
+# --------------------------
+if st.sidebar.button("Reset Filters"):
+    st.experimental_rerun()
 
-# Apply filters
-filtered = df.copy()
-if batsman   != "All": filtered = filtered[filtered["BatsmanName"]   == batsman]
-if delivery  != "All": filtered = filtered[filtered["DeliveryType"]  == delivery]
-if bat_team  != "All": filtered = filtered[filtered["BattingTeam"]   == bat_team]
-if bowl_team != "All": filtered = filtered[filtered["BowlingTeam"]   == bowl_team]
+# --------------------------
+# Cascading Filter Logic
+# --------------------------
+batsman_options = ["All"] + sorted(df["BatsmanName"].unique())
+batsman = st.sidebar.selectbox("Select Batsman", batsman_options)
 
-# --------------------------------------------------
-# 3. CHOOSE ZONE MAP (Right‑ or Left‑handed)
-# --------------------------------------------------
-zones_right = {                       # (x1, y1, x2, y2)
-    "Zone 1": (-0.72, 0.00, -0.45, 1.91),
-    "Zone 2": (-0.45, 0.00, -0.18, 0.71),
-    "Zone 3": (-0.18, 0.00,  0.18, 0.71),
+df_bat = df if batsman == "All" else df[df["BatsmanName"] == batsman]
+
+delivery_options = ["All"] + sorted(df_bat["DeliveryType"].dropna().unique())
+delivery = st.sidebar.selectbox("Select Delivery Type", delivery_options)
+
+df_delivery = df_bat if delivery == "All" else df_bat[df_bat["DeliveryType"] == delivery]
+
+bat_team_options = ["All"] + sorted(df_delivery["BattingTeam"].dropna().unique())
+bat_team = st.sidebar.selectbox("Select Batting Team", bat_team_options)
+
+df_bat_team = df_delivery if bat_team == "All" else df_delivery[df_delivery["BattingTeam"] == bat_team]
+
+bowl_team_options = ["All"] + sorted(df_bat_team["BowlingTeam"].dropna().unique())
+bowl_team = st.sidebar.selectbox("Select Bowling Team", bowl_team_options)
+
+# Final filtered data
+filtered = df_bat_team if bowl_team == "All" else df_bat_team[df_bat_team["BowlingTeam"] == bowl_team]
+
+# --------------------------
+# Define Zones based on Batting Hand
+# --------------------------
+right_hand_zones = {
+    "Zone 1": (-0.72, 0, -0.45, 1.91),
+    "Zone 2": (-0.45, 0, -0.18, 0.71),
+    "Zone 3": (-0.18, 0, 0.18, 0.71),
     "Zone 4": (-0.45, 0.71, -0.18, 1.31),
-    "Zone 5": (-0.18, 0.71,  0.18, 1.31),
-    "Zone 6": (-0.45, 1.31,  0.18, 1.91),
+    "Zone 5": (-0.18, 0.71, 0.18, 1.31),
+    "Zone 6": (-0.45, 1.31, 0.18, 1.91),
 }
 
-zones_left = {
-    "Zone 1": ( 0.45, 0.00,  0.72, 1.91),          # mirrored
-    "Zone 2": ( 0.18, 0.00,  0.45, 0.71),
-    "Zone 3": (-0.18, 0.00,  0.18, 0.71),          # unchanged
-    "Zone 4": ( 0.18, 0.71,  0.45, 1.31),
-    "Zone 5": (-0.18, 0.71,  0.18, 1.31),          # unchanged
-    "Zone 6": (-0.18, 1.31,  0.45, 1.91),          # above zones 4 & 5
+left_hand_zones = {
+    "Zone 1": (0.45, 0, 0.72, 1.91),
+    "Zone 2": (0.18, 0, 0.45, 0.71),
+    "Zone 3": (-0.18, 0, 0.18, 0.71),  # same as right
+    "Zone 4": (0.18, 0.71, 0.45, 1.31),
+    "Zone 5": (-0.18, 0.71, 0.18, 1.31),  # same as right
+    "Zone 6": (-0.18, 1.31, 0.45, 1.91),
 }
 
-# Decide which map to use (default to right‑hand if mixed/empty)
-is_right = True
-if not filtered.empty:
-    is_right = bool(filtered["IsBatsmanRightHanded"].iloc[0])
+# Detect handedness
+is_right_handed = True
+if batsman != "All":
+    handed = filtered["IsBatsmanRightHanded"].dropna().unique()
+    is_right_handed = handed[0] if len(handed) > 0 else True
 
-zones_layout = zones_right if is_right else zones_left
+zones_layout = right_hand_zones if is_right_handed else left_hand_zones
 
-# --------------------------------------------------
-# 4. ASSIGN ZONES
-# --------------------------------------------------
+# --------------------------
+# Assign Zone
+# --------------------------
 def assign_zone(row):
     x, y = row["CreaseY"], row["CreaseZ"]
     for zone, (x1, y1, x2, y2) in zones_layout.items():
@@ -68,69 +84,69 @@ def assign_zone(row):
 filtered["Zone"] = filtered.apply(assign_zone, axis=1)
 filtered = filtered[filtered["Zone"] != "Other"]
 
-# --------------------------------------------------
-# 5. SUMMARY STATS
-# --------------------------------------------------
+# --------------------------
+# Calculate Summary
+# --------------------------
 summary = (
     filtered.groupby("Zone")
     .agg(
-        Runs    = ("Runs",   "sum"),
-        Wickets = ("Wicket", lambda s: (s == True).sum())
+        Runs=("Runs", "sum"),
+        Wickets=("Wicket", lambda x: (x == True).sum())
     )
     .reindex(["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6"])
     .fillna(0)
 )
 summary["Avg Runs/Wicket"] = summary["Runs"] / summary["Wickets"]
-summary["Avg Runs/Wicket"].replace([float("inf"), float("nan")], 0, inplace=True)
+summary["Avg Runs/Wicket"] = summary["Avg Runs/Wicket"].replace([float("inf"), float("nan")], 0)
 
-# --------------------------------------------------
-# 6. PLOT HEATMAP
-# --------------------------------------------------
-norm = mcolors.Normalize(vmin=summary["Avg Runs/Wicket"].min(),
-                         vmax=summary["Avg Runs/Wicket"].max())
-cmap = cm.get_cmap("Blues")
+# --------------------------
+# Heatmap Plotting
+# --------------------------
+avg_values = summary["Avg Runs/Wicket"]
+norm = mcolors.Normalize(vmin=avg_values.min(), vmax=avg_values.max())
+cmap = cm.get_cmap('RdYlGn')
 
-fig, ax = plt.subplots(figsize=(10, 10))
+fig, ax = plt.subplots(figsize=(4, 5))
 
 for zone, (x1, y1, x2, y2) in zones_layout.items():
     w, h = x2 - x1, y2 - y1
-    avg  = summary.loc[zone, "Avg Runs/Wicket"]
+    avg = summary.loc[zone, "Avg Runs/Wicket"]
     color = cmap(norm(avg))
 
-    ax.add_patch(
-        patches.Rectangle((x1, y1), w, h,
-                          edgecolor="black",
-                          facecolor=color,
-                          linewidth=2)
-    )
+    ax.add_patch(patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=2))
 
     runs = int(summary.loc[zone, "Runs"])
     wkts = int(summary.loc[zone, "Wickets"])
 
     ax.text(
-        x1 + w / 2, y1 + h / 2,
+        x1 + w / 2,
+        y1 + h / 2,
         f"{zone}\nRuns: {runs}\nWkts: {wkts}\nAvg: {avg:.1f}",
-        ha="center", va="center",
-        fontsize=10, weight="bold",
+        ha="center",
+        va="center",
+        weight="bold",
+        fontsize=8,
         color="black" if norm(avg) < 0.6 else "white"
     )
 
 ax.set_xlim(-0.75, 0.75)
 ax.set_ylim(0, 2)
-ax.set_xlabel("CreaseY (m)")
-ax.set_ylabel("CreaseZ (m)")
+ax.set_xlabel("CreaseY (Width in meters)")
+ax.set_ylabel("CreaseZ (Length in meters)")
 
+# Set Title
 if batsman == "All":
-    title = "(All Batsmen)"
+    ax.set_title("Zone-wise Heatmap: Avg Runs/Wicket")
 else:
-    title = f"{batsman}"
+    ax.set_title(f"{batsman} - Zone-wise Heatmap")
 
-ax.set_title(title)
 ax.grid(True)
 
+# Colorbar
 sm = cm.ScalarMappable(cmap=cmap, norm=norm)
 sm.set_array([])
 cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
 cbar.set_label("Avg Runs/Wicket")
 
+# Show Plot
 st.pyplot(fig)
