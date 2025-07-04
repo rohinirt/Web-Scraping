@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-# Load data
+# Load your data
 df = pd.read_csv("test data.csv")
 
 # Sidebar filters
@@ -24,7 +24,7 @@ if bat_team != "All":
 if bowl_team != "All":
     filtered = filtered[filtered["BowlingTeam"] == bowl_team]
 
-# Define updated zones layout (left, bottom, right, top)
+# Define zones layout: (x1, y1, x2, y2)
 zones_layout = {
     "Zone 1": (-0.72, 0, -0.45, 1.91),
     "Zone 2": (-0.45, 0, -0.18, 0.71),
@@ -34,7 +34,7 @@ zones_layout = {
     "Zone 6": (-0.45, 1.31, 0.18, 1.91),
 }
 
-# Assign zones based on new real-world values
+# Assign zones
 def assign_zone(row):
     x, y = row["CreaseY"], row["CreaseZ"]
     for zone, (x1, y1, x2, y2) in zones_layout.items():
@@ -45,37 +45,48 @@ def assign_zone(row):
 filtered["Zone"] = filtered.apply(assign_zone, axis=1)
 filtered = filtered[filtered["Zone"] != "Other"]
 
-# Total runs per zone
-zone_runs = (
-    filtered.groupby("Zone")["Runs"]
-    .sum()
+# Calculate runs, wickets, avg
+summary = (
+    filtered.groupby("Zone")
+    .agg(
+        Runs=("Runs", "sum"),
+        Wickets=("Wicket", lambda x: (x == True).sum())
+    )
     .reindex(["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6"])
     .fillna(0)
 )
+summary["Avg Runs/Wicket"] = summary["Runs"] / summary["Wickets"]
+summary["Avg Runs/Wicket"] = summary["Avg Runs/Wicket"].replace([float("inf"), float("nan")], 0)
 
-# Plot heatmap
+# Plot zones
 colors = ['#FFCCCC', '#CCFFCC', '#CCCCFF', '#FFFFCC', '#FFCCFF', '#CCE5FF']
-fig, ax = plt.subplots(figsize=(3, 5))
+fig, ax = plt.subplots(figsize=(7, 10))
 
 for (zone, (x1, y1, x2, y2)), color in zip(zones_layout.items(), colors):
     w, h = x2 - x1, y2 - y1
     ax.add_patch(
         patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=2)
     )
+
+    runs = int(summary.loc[zone, "Runs"])
+    wkts = int(summary.loc[zone, "Wickets"])
+    avg = summary.loc[zone, "Avg Runs/Wicket"]
+
     ax.text(
         x1 + w / 2,
         y1 + h / 2,
-        f"{zone}\nRuns: {int(zone_runs.get(zone, 0))}",
+        f"{zone}\nRuns: {runs}\nWkts: {wkts}\nAvg: {avg:.1f}",
         ha="center",
         va="center",
         weight="bold",
+        fontsize=9
     )
 
 ax.set_xlim(-0.75, 0.25)
 ax.set_ylim(0, 2)
 ax.set_xlabel("CreaseY (Width in meters)")
 ax.set_ylabel("CreaseZ (Length in meters)")
-ax.set_title("Zone‑wise Runs (Real Dimensions)")
+ax.set_title("Zone‑wise Runs, Wickets, and Avg Runs/Wicket")
 ax.grid(True)
 
 st.pyplot(fig)
