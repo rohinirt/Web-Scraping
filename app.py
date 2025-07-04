@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 # Load your data
-df = pd.read_csv(r"D:\Rohini Personal\Data Analysis\Projects Datasets\Zones\test data.csv")
+df = pd.read_csv("test data.csv")
 
 
 # In[ ]:
