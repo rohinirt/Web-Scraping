@@ -11,7 +11,7 @@ df = pd.read_csv("test data.csv")
 # Sidebar filters
 st.sidebar.header("Filters")
 batsman = st.sidebar.selectbox("Select Batsman", ["All"] + sorted(df["BatsmanName"].unique()))
-bowler = st.sidebar.selectbox("Select Bowler", ["All"] + sorted(df["BowlerName"].unique()))
+delivery_type = st.sidebar.selectbox("Select Delivery Type", ["All"] + sorted(df["DeliveryType"].unique()))
 bat_team = st.sidebar.selectbox("Select Batting Team", ["All"] + sorted(df["BattingTeam"].unique()))
 bowl_team = st.sidebar.selectbox("Select Bowling Team", ["All"] + sorted(df["BowlingTeam"].unique()))
 
@@ -19,8 +19,8 @@ bowl_team = st.sidebar.selectbox("Select Bowling Team", ["All"] + sorted(df["Bow
 filtered = df.copy()
 if batsman != "All":
     filtered = filtered[filtered["BatsmanName"] == batsman]
-if bowler != "All":
-    filtered = filtered[filtered["BowlerName"] == bowler]
+if delivery_type != "All":
+    filtered = filtered[filtered["DeliveryType"] == delivery_type]
 if bat_team != "All":
     filtered = filtered[filtered["BattingTeam"] == bat_team]
 if bowl_team != "All":
@@ -105,4 +105,3 @@ cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
 cbar.set_label("Avg Runs/Wicket")
 
 st.pyplot(fig)
-
