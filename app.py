@@ -125,7 +125,7 @@ for zone, (x1, y1, x2, y2) in zones_layout.items():
         ha="center",
         va="center",
         weight="bold",
-        fontsize=9,
+        fontsize=10,
         color="black" if norm(avg) < 0.6 else "white"
     )
 
@@ -140,7 +140,7 @@ if batsman == "All":
 else:
     ax.set_title(f"{batsman}")
 
-ax.grid(True)
+ax.grid(False)
 
 # Colorbar
 sm = cm.ScalarMappable(cmap=cmap, norm=norm)
