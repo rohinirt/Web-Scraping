@@ -58,19 +58,29 @@ summary = (
 summary["Avg Runs/Wicket"] = summary["Runs"] / summary["Wickets"]
 summary["Avg Runs/Wicket"] = summary["Avg Runs/Wicket"].replace([float("inf"), float("nan")], 0)
 
-# Plot zones
-colors = ['#FFCCCC', '#CCFFCC', '#CCCCFF', '#FFFFCC', '#FFCCFF', '#CCE5FF']
+avg_values = summary["Avg Runs/Wicket"]
+norm = mcolors.Normalize(vmin=avg_values.min(), vmax=avg_values.max())
+cmap = cm.get_cmap('YlOrRd')  # You can try other maps like 'coolwarm', 'viridis'
+
 fig, ax = plt.subplots(figsize=(7, 10))
 
-for (zone, (x1, y1, x2, y2)), color in zip(zones_layout.items(), colors):
+for zone, (x1, y1, x2, y2) in zones_layout.items():
     w, h = x2 - x1, y2 - y1
+
+    avg = summary.loc[zone, "Avg Runs/Wicket"]
+    color = cmap(norm(avg))
+
     ax.add_patch(
-        patches.Rectangle((x1, y1), w, h, edgecolor="black", facecolor=color, linewidth=2)
+        patches.Rectangle(
+            (x1, y1), w, h,
+            edgecolor="black",
+            facecolor=color,
+            linewidth=2
+        )
     )
 
     runs = int(summary.loc[zone, "Runs"])
     wkts = int(summary.loc[zone, "Wickets"])
-    avg = summary.loc[zone, "Avg Runs/Wicket"]
 
     ax.text(
         x1 + w / 2,
@@ -79,14 +89,21 @@ for (zone, (x1, y1, x2, y2)), color in zip(zones_layout.items(), colors):
         ha="center",
         va="center",
         weight="bold",
-        fontsize=9
+        fontsize=9,
+        color="black" if norm(avg) < 0.6 else "white"  # contrast text
     )
 
 ax.set_xlim(-0.75, 0.25)
 ax.set_ylim(0, 2)
 ax.set_xlabel("CreaseY (Width in meters)")
 ax.set_ylabel("CreaseZ (Length in meters)")
-ax.set_title("Zone‑wise Runs, Wickets, and Avg Runs/Wicket")
+ax.set_title("Zone-wise Heatmap: Avg Runs/Wicket")
 ax.grid(True)
+
+# Optional: add colorbar legend
+sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+sm.set_array([])
+cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.04)
+cbar.set_label("Avg Runs/Wicket")
 
 st.pyplot(fig)
